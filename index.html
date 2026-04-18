@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoSort Vision AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0A1910;
+            --surface: rgba(16, 35, 24, 0.7);
+            --border: rgba(46, 125, 50, 0.2);
+            --accent: #4CAF50;
+            --accent-glow: rgba(76, 175, 80, 0.4);
+            --text-main: #FFFFFF;
+            --text-muted: #A5D6A7;
+            --recycle: #4CAF50;
+            --trash: #F44336;
+            --radius: 20px;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at top right, rgba(46, 125, 50, 0.15), transparent 40%),
+                              radial-gradient(circle at bottom left, rgba(27, 94, 32, 0.15), transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 560px;
+            background: var(--surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2.5rem;
+            box-shadow: 0 24px 40px rgba(0,0,0,0.4);
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideUp {
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        header { text-align: center; margin-bottom: 2rem; }
+        h1 { margin: 0; font-size: 2rem; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+        p { color: var(--text-muted); margin: 0.5rem 0 0 0; font-size: 0.95rem; }
+        .badge { display: inline-block; background: rgba(76,175,80,0.1); border: 1px solid var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: var(--accent); margin-bottom: 10px; }
+
+        /* Drag & Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            background: rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(76, 175, 80, 0.05);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .drop-zone input[type="file"] {
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer;
+        }
+
+        .upload-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+        .upload-text { font-weight: 500; font-size: 1.05rem; }
+        .upload-hint { font-size: 0.8rem; color: #757575; margin-top: 5px; }
+
+        /* Image Preview & Scanner */
+        .preview-container {
+            display: none;
+            position: relative;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 1.5rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        #imagePreview { width: 100%; display: block; max-height: 350px; object-fit: contain; background: #000; }
+
+        /* Laser Scanner Animation */
+        .scanner-line {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 3px;
+            background: var(--accent);
+            box-shadow: 0 0 15px 5px var(--accent-glow);
+            display: none;
+        }
+
+        .is-scanning .scanner-line {
+            display: block;
+            animation: scan 2s linear infinite alternate;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Controls */
+        .btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            transition: all 0.3s ease;
+            display: none;
+        }
+        .btn:hover:not(:disabled) { box-shadow: 0 0 20px var(--accent-glow); transform: translateY(-2px); }
+        .btn:disabled { background: #2E3B32; color: #757575; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Results Display */
+        .results-panel {
+            margin-top: 1.5rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: none;
+            animation: slideUp 0.4s ease forwards;
+        }
+
+        .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .tag-name { font-size: 1.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .confidence-wrapper { width: 100%; background: rgba(255,255,255,0.1); border-radius: 10px; height: 8px; overflow: hidden; position: relative; }
+        .confidence-fill { height: 100%; width: 0%; border-radius: 10px; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
+        .confidence-text { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; font-weight: 500;}
+
+        /* Dynamic Colors */
+        .is-recyclable .tag-name { color: var(--recycle); }
+        .is-recyclable .confidence-fill { background: var(--recycle); box-shadow: 0 0 10px var(--recycle); }
+        .is-trash .tag-name { color: var(--trash); }
+        .is-trash .confidence-fill { background: var(--trash); box-shadow: 0 0 10px var(--trash); }
+
+        /* Toast */
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #333; color: white; padding: 12px 24px; border-radius: 30px; font-size: 0.9rem; opacity: 0; transition: all 0.3s; z-index: 1000; }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <div class="badge">B.Tech Cloud Vision Project</div>
+        <h1>EcoSort AI</h1>
+        <p>Intelligent Waste Sorting powered by Azure Custom Vision</p>
+    </header>
+
+    <div class="drop-zone" id="dropZone">
+        <input type="file" id="imageInput" accept="image/jpeg, image/png">
+        <span class="upload-icon">📸</span>
+        <div class="upload-text" id="uploadText">Drag & Drop waste image here</div>
+        <div class="upload-hint">or click to browse files</div>
+    </div>
+
+    <div class="preview-container" id="previewContainer">
+        <img id="imagePreview" alt="Image to analyze">
+        <div class="scanner-line"></div>
+    </div>
+
+    <button id="classifyBtn" class="btn">Analyze Material Composition</button>
+
+    <div class="results-panel" id="resultsPanel">
+        <div class="result-header">
+            <span class="tag-name" id="resultTag">Analysis...</span>
+        </div>
+        <div>
+            <div class="confidence-wrapper">
+                <div class="confidence-fill" id="confidenceBar"></div>
+            </div>
+            <div class="confidence-text">
+                <span>AI Confidence Score</span>
+                <span id="confidenceValue">0%</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast">Message</div>
+
+<script>
+    // --- AZURE CUSTOM VISION CREDENTIALS ---
+    const PREDICTION_URL = "https://southeastasia.api.cognitive.microsoft.com/customvision/v3.0/Prediction/916a983e-5b98-4f44-aa30-8d0569a91cf2/classify/iterations/Iteration1/image"; 
+    const PREDICTION_KEY = "462d48beef2e4d36bb11be106d64f8bb";
+
+    // DOM Elements
+    const dropZone = document.getElementById('dropZone');
+    const imageInput = document.getElementById('imageInput');
+    const uploadText = document.getElementById('uploadText');
+    const previewContainer = document.getElementById('previewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const classifyBtn = document.getElementById('classifyBtn');
+    const resultsPanel = document.getElementById('resultsPanel');
+    const resultTag = document.getElementById('resultTag');
+    const confidenceBar = document.getElementById('confidenceBar');
+    const confidenceValue = document.getElementById('confidenceValue');
+    const toast = document.getElementById('toast');
+
+    let currentFile = null;
+
+    function showToast(msg) {
+        toast.innerText = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // --- DRAG AND DROP LOGIC ---
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        handleFile(dt.files[0]);
+    });
+
+    imageInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+    function handleFile(file) {
+        if (!file || !file.type.startsWith('image/')) {
+            showToast("Please upload a valid image file (JPEG/PNG).");
+            return;
+        }
+
+        currentFile = file;
+        
+        // Reset UI for new image
+        resultsPanel.style.display = 'none';
+        confidenceBar.style.width = '0%';
+        resultsPanel.className = 'results-panel'; // clear color classes
+
+        // Show Preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagePreview.src = e.target.result;
+            dropZone.style.display = 'none';
+            previewContainer.style.display = 'block';
+            classifyBtn.style.display = 'block';
+            classifyBtn.disabled = false;
+            classifyBtn.innerText = "Analyze Material Composition";
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // --- AZURE API LOGIC ---
+    classifyBtn.addEventListener('click', async () => {
+        if (!currentFile) return;
+
+        if (PREDICTION_KEY === "YOUR_CUSTOM_VISION_PREDICTION_KEY_HERE") {
+            showToast("Error: Missing Azure API Key in code.");
+            return;
+        }
+
+        // Set Scanning UI State
+        classifyBtn.disabled = true;
+        classifyBtn.innerText = "Running Neural Network...";
+        previewContainer.classList.add('is-scanning');
+        resultsPanel.style.display = 'none';
+
+        try {
+            const response = await fetch(PREDICTION_URL, {
+                method: 'POST',
+                headers: {
+                    'Prediction-Key': PREDICTION_KEY,
+                    'Content-Type': 'application/octet-stream'
+                },
+                body: currentFile
+            });
+
+            if (!response.ok) throw new Error(`Azure Error: ${response.status}`);
+
+            const data = await response.json();
+            
+            // Extract top prediction
+            const topPrediction = data.predictions[0];
+            const tagName = topPrediction.tagName; 
+            const probability = Math.round(topPrediction.probability * 100); 
+
+            // Update UI
+            previewContainer.classList.remove('is-scanning');
+            resultsPanel.style.display = 'block';
+            resultTag.innerText = tagName;
+            confidenceValue.innerText = `${probability}%`;
+            
+            // Dynamic Styling based on result
+            if (tagName.toLowerCase().includes('non')) {
+                resultsPanel.classList.add('is-trash');
+                resultTag.innerText = "Non-Recyclable (Trash)";
+            } else {
+                resultsPanel.classList.add('is-recyclable');
+                resultTag.innerText = "Recyclable Material";
+            }
+
+            // Animate the bar
+            setTimeout(() => {
+                confidenceBar.style.width = `${probability}%`;
+            }, 100);
+
+            // Change button to allow another upload
+            classifyBtn.innerText = "Scan Another Item";
+            classifyBtn.disabled = false;
+            classifyBtn.onclick = resetApp;
+
+        } catch (error) {
+            console.error(error);
+            showToast("Failed to connect to Azure Custom Vision.");
+            previewContainer.classList.remove('is-scanning');
+            classifyBtn.disabled = false;
+            classifyBtn.innerText = "Retry Analysis";
+        }
+    });
+
+    function resetApp() {
+        currentFile = null;
+        imageInput.value = '';
+        dropZone.style.display = 'block';
+        previewContainer.style.display = 'none';
+        classifyBtn.style.display = 'none';
+        resultsPanel.style.display = 'none';
+        
+        // Restore original click listener
+        classifyBtn.onclick = null;
+    }
+</script>
+</body>
+</html>
