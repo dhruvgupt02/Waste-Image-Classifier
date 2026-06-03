@@ -1,3 +1,8 @@
+# ♻️ EcoSort Vision AI — Intelligent Waste Segregation System
+> **National-Level Smart Sustainability Platform & IoT Digital Twin (Competition Edition)**
+
+---
+
 ## 🚀 Advanced Features (Competition Edition)
 
 To transform EcoSort Vision AI from a simple waste classifier into a national-level smart sustainability platform, the following advanced features have been incorporated.
@@ -31,7 +36,8 @@ EcoSort AI now supports real-time waste classification directly from the user's 
 * MediaStream API
 * HTML5 Video
 * Canvas API
-* Azure Custom Vision
+* Client-Side TensorFlow.js (MobileNet compilation with custom Vision heuristics fallback)
+* Azure Custom Vision REST integration parameters
 
 ---
 
@@ -59,7 +65,7 @@ A smart waste bin integrated with Raspberry Pi and servo motors that automatical
 
 ### Impact
 
-This feature converts the project from a software prototype into a real-world IoT solution.
+This feature converts the project from a software prototype into a real-world IoT solution. The application acts as a high-fidelity **Digital Twin simulator** for the Raspberry Pi hardware, featuring animated compartments, WebSocket console feedback, and lid actuation loops.
 
 ---
 
@@ -107,6 +113,17 @@ This transforms EcoSort AI from a classification system into an environmental aw
 
 ---
 
+## 🔐 Role-Based Access Control (Tier 4 - Implemented Security)
+
+### Overview
+A secure, blurred login overlay that prevents dashboard actions until operators authenticate with their access tier.
+
+### Access Tiers
+* 👑 **Platform Administrator** (`admin@ecosort.com` / `admin`): Unrestricted access to manual overrides, data purging, and CSV export utilities.
+* 👤 **System Operator** (`operator@ecosort.com` / `operator`): Locked out of database clears, and manual overrides are restricted behind an operator lockout window.
+
+---
+
 ## 🤖 Eco AI Sustainability Assistant (Tier 5)
 
 ### Overview
@@ -137,31 +154,21 @@ An AI-powered chatbot that helps users learn about recycling and sustainable was
 
 ## 🏗️ System Architecture
 
+```
 User → Image Upload / Live Camera
-
-↓
-
-EcoSort Vision AI
-
-↓
-
-Azure Custom Vision Model
-
-↓
-
-Waste Classification
-
-↓
-
+             ↓
+     EcoSort Vision AI
+             ↓
+  Azure Custom Vision Model
+             ↓
+    Waste Classification
+             ↓
 ┌─────────────────────┬─────────────────────┬─────────────────────┐
-
-│ Analytics Dashboard │ Raspberry Pi Bin │ Eco AI Chatbot │
-
+│ Analytics Dashboard │  Raspberry Pi Bin   │   Eco AI Chatbot    │
 └─────────────────────┴─────────────────────┴─────────────────────┘
-
-↓
-
+             ↓
 Environmental Impact Monitoring
+```
 
 ---
 
