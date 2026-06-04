@@ -1904,6 +1904,9 @@
             max-width: 280px;
             line-height: 1.4;
         }
+        #azureFieldsGroup {
+            transition: opacity 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -1976,6 +1979,58 @@
     </div>
 </div>
 
+<!-- API Settings Overlay Screen -->
+<div class="auth-overlay hidden" id="settingsOverlay">
+    <div class="auth-card" style="width:460px;">
+        <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
+            <div class="brand-logo" style="width:36px; height:36px; font-size:1.25rem; background:linear-gradient(135deg, var(--accent-blue), var(--accent-yellow));">⚙</div>
+            <h2 style="font-weight:800; font-size:1.5rem; letter-spacing:-0.5px;">API Configuration</h2>
+        </div>
+        
+        <div class="toggle-switch-container" style="background:rgba(255,255,255,0.02); border:1px solid var(--border);">
+            <div class="toggle-label">
+                Enable Azure Custom Vision
+                <span>Use Azure REST API instead of local models</span>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="azureEnabledToggle" onchange="toggleAzureFields()">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div id="azureFieldsGroup" style="display:flex; flex-direction:column; gap:1.25rem;">
+            <div class="input-group">
+                <label>Prediction Endpoint URL</label>
+                <input type="text" id="azureEndpoint" placeholder="https://<region>.api.cognitive.microsoft.com/">
+            </div>
+            <div class="input-group">
+                <label>Prediction Key</label>
+                <input type="password" id="azureKey" placeholder="••••••••••••••••••••••••••••••••">
+            </div>
+            <div class="input-group">
+                <label>Project ID</label>
+                <input type="text" id="azureProjectId" placeholder="12345678-abcd-1234-abcd-1234567890ab">
+            </div>
+            <div class="input-group">
+                <label>Published Iteration Name</label>
+                <input type="text" id="azureIterationName" placeholder="Iteration1">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:12px; margin-top:10px;">
+            <button class="btn btn-secondary" onclick="closeSettingsModal()" style="flex:1;">
+                <span>Cancel</span>
+            </button>
+            <button class="btn" onclick="saveSettings()" style="flex:1;">
+                <span>Save Config</span>
+            </button>
+        </div>
+        <button class="btn btn-secondary" id="testAzureBtn" onclick="testAzureConnection()" style="margin-top: -5px;">
+            <span>🧪 Test Connection</span>
+        </button>
+    </div>
+</div>
+
 <div class="app-shell">
     
     <!-- Desktop Sidebar -->
@@ -2028,6 +2083,12 @@
                     Training Arena
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" id="nav-apiSettings" onclick="openSettingsModal()">
+                    <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+                    API Config
+                </a>
+            </li>
             
             <li class="nav-item" style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;">
                 <a class="nav-link" onclick="logout()" style="color:#ff4757;">
@@ -2048,7 +2109,10 @@
     <!-- Mobile Header -->
     <header class="mobile-header">
         <h2>♻ EcoSort AI</h2>
-        <div class="iot-status-dot" id="mobileIotDot" style="margin-right:5px"></div>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div class="iot-status-dot" id="mobileIotDot"></div>
+            <button onclick="openSettingsModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.25rem; cursor:pointer;" title="API Configuration">⚙️</button>
+        </div>
     </header>
 
     <!-- Mobile Bottom Navigation Bar -->
@@ -2515,6 +2579,182 @@
     // 0. AUTHENTICATION & ROLE MANAGEMENT SYSTEM
     // ==========================================
     let currentUser = null;
+
+    // ==========================================
+    // 0.1 API CONFIGURATION & AZURE CUSTOM VISION
+    // ==========================================
+    let azureConfig = {
+        enabled: false,
+        endpoint: "",
+        key: "",
+        projectId: "",
+        iterationName: ""
+    };
+
+    function loadAzureConfig() {
+        const cached = localStorage.getItem('ecosort_azure_config');
+        if (cached) {
+            azureConfig = JSON.parse(cached);
+        }
+        
+        // Populate inputs
+        document.getElementById('azureEnabledToggle').checked = azureConfig.enabled;
+        document.getElementById('azureEndpoint').value = azureConfig.endpoint || "";
+        document.getElementById('azureKey').value = azureConfig.key || "";
+        document.getElementById('azureProjectId').value = azureConfig.projectId || "";
+        document.getElementById('azureIterationName').value = azureConfig.iterationName || "";
+        
+        toggleAzureFields();
+    }
+
+    function toggleAzureFields() {
+        const enabled = document.getElementById('azureEnabledToggle').checked;
+        const fieldsGroup = document.getElementById('azureFieldsGroup');
+        const testBtn = document.getElementById('testAzureBtn');
+        if (enabled) {
+            fieldsGroup.style.opacity = '1';
+            fieldsGroup.style.pointerEvents = 'auto';
+            testBtn.style.display = 'block';
+        } else {
+            fieldsGroup.style.opacity = '0.4';
+            fieldsGroup.style.pointerEvents = 'none';
+            testBtn.style.display = 'none';
+        }
+    }
+
+    function openSettingsModal() {
+        EcoAudio.playClick();
+        loadAzureConfig();
+        document.getElementById('settingsOverlay').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+        EcoAudio.playClick();
+        document.getElementById('settingsOverlay').classList.add('hidden');
+    }
+
+    function parseAzureInput(inputStr) {
+        const url = inputStr.trim();
+        // Match base domain, project ID, and iteration name from a full Custom Vision URL
+        const match = url.match(/^(https:\/\/[^\/]+)\/customvision\/v3\.0\/Prediction\/([a-f0-9\-]+)\/classify\/iterations\/([^\/]+)/i);
+        if (match) {
+            return {
+                endpoint: match[1],
+                projectId: match[2],
+                iterationName: match[3]
+            };
+        }
+        return null;
+    }
+
+    function saveSettings() {
+        EcoAudio.playSuccess();
+        azureConfig.enabled = document.getElementById('azureEnabledToggle').checked;
+        
+        let endpointVal = document.getElementById('azureEndpoint').value.trim().replace(/^["']|["']$/g, "");
+        let keyVal = document.getElementById('azureKey').value.trim().replace(/^["']|["']$/g, "");
+        let projectIdVal = document.getElementById('azureProjectId').value.trim().replace(/^["']|["']$/g, "");
+        let iterationNameVal = document.getElementById('azureIterationName').value.trim().replace(/^["']|["']$/g, "");
+
+        // Auto parse if full URL is pasted into the Endpoint input
+        const parsed = parseAzureInput(endpointVal);
+        if (parsed) {
+            endpointVal = parsed.endpoint;
+            projectIdVal = parsed.projectId;
+            iterationNameVal = parsed.iterationName;
+            
+            document.getElementById('azureEndpoint').value = endpointVal;
+            document.getElementById('azureProjectId').value = projectIdVal;
+            document.getElementById('azureIterationName').value = iterationNameVal;
+        }
+
+        azureConfig.endpoint = endpointVal;
+        azureConfig.key = keyVal;
+        azureConfig.projectId = projectIdVal;
+        azureConfig.iterationName = iterationNameVal;
+
+        localStorage.setItem('ecosort_azure_config', JSON.stringify(azureConfig));
+        document.getElementById('settingsOverlay').classList.add('hidden');
+        showToast(azureConfig.enabled ? "Azure Custom Vision Enabled" : "Azure Custom Vision Disabled");
+        
+        // Update live camera status text
+        const statusText = document.getElementById('camHudStatus');
+        if (statusText) {
+            if (activeWebcamStream) {
+                statusText.innerText = azureConfig.enabled ? "STREAM ONLINE - AZURE ACTIVE" : "STREAM ONLINE - AI SCANNING";
+            }
+        }
+    }
+
+    async function testAzureConnection() {
+        EcoAudio.playClick();
+        let endpoint = document.getElementById('azureEndpoint').value.trim().replace(/^["']|["']$/g, "");
+        let key = document.getElementById('azureKey').value.trim().replace(/^["']|["']$/g, "");
+        let projectId = document.getElementById('azureProjectId').value.trim().replace(/^["']|["']$/g, "");
+        let iterationName = document.getElementById('azureIterationName').value.trim().replace(/^["']|["']$/g, "");
+
+        // Auto-parse on connection test too
+        const parsed = parseAzureInput(endpoint);
+        if (parsed) {
+            endpoint = parsed.endpoint;
+            projectId = parsed.projectId;
+            iterationName = parsed.iterationName;
+            
+            document.getElementById('azureEndpoint').value = endpoint;
+            document.getElementById('azureProjectId').value = projectId;
+            document.getElementById('azureIterationName').value = iterationName;
+        }
+
+        if (!endpoint || !key || !projectId || !iterationName) {
+            showToast("⚠️ Please fill in all Azure settings.", "🚨");
+            return;
+        }
+
+        const testBtn = document.getElementById('testAzureBtn');
+        testBtn.disabled = true;
+        testBtn.querySelector('span').innerText = "Testing connection...";
+
+        // Create a 1x1 empty red pixel JPEG blob to test
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(0,0,1,1);
+        
+        canvas.toBlob(async (blob) => {
+            const url = `${endpoint.replace(/\/$/, '')}/customvision/v3.0/Prediction/${projectId}/classify/iterations/${iterationName}/image`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Prediction-Key': key,
+                        'Content-Type': 'application/octet-stream'
+                    },
+                    body: blob
+                });
+                
+                testBtn.disabled = false;
+                testBtn.querySelector('span').innerText = "🧪 Test Connection";
+                
+                if (response.ok) {
+                    showToast("✅ Connection test successful!", "🎉");
+                    EcoAudio.playSuccess();
+                } else {
+                    const errText = await response.text();
+                    console.error("Test connection response err:", errText);
+                    showToast(`❌ Test failed: HTTP ${response.status}`, "🚨");
+                    EcoAudio.playError();
+                }
+            } catch (err) {
+                console.error("Test connection network err:", err);
+                testBtn.disabled = false;
+                testBtn.querySelector('span').innerText = "🧪 Test Connection";
+                showToast("❌ Network error. Check console and URL.", "🚨");
+                EcoAudio.playError();
+            }
+        }, 'image/jpeg');
+    }
 
     // Seed default accounts in localStorage if empty
     function seedAccounts() {
@@ -3000,9 +3240,9 @@
         const labelLower = label.toLowerCase();
         
         const mappings = {
-            recyclable: ['bottle', 'can', 'tin', 'paper', 'cardboard', 'carton', 'plastic', 'jar', 'mug', 'cup', 'box', 'flask', 'beaker', 'recycling', 'newspaper'],
+            recyclable: ['recycleable', 'recyleable', 'recyclable', 'bottle', 'can', 'tin', 'paper', 'cardboard', 'carton', 'plastic', 'jar', 'mug', 'cup', 'box', 'flask', 'beaker', 'recycling', 'newspaper'],
             glass: ['wine bottle', 'beer bottle', 'champagne', 'glass bottle', 'goblet', 'decanter'],
-            organic: ['banana', 'apple', 'orange', 'fruit', 'vegetable', 'leaf', 'plant', 'food', 'bread', 'potato', 'tomato', 'onion'],
+            organic: ['biodegradabled', 'biodegrable', 'biodegradable', 'organic', 'banana', 'apple', 'orange', 'fruit', 'vegetable', 'leaf', 'plant', 'food', 'bread', 'potato', 'tomato', 'onion'],
             trash: ['wrapper', 'bag', 'packet', 'sachet', 'tissue', 'napkin', 'diaper', 'cigarette', 'butt', 'mask', 'glove', 'foam', 'styrofoam', 'trash', 'landfill']
         };
 
@@ -3120,35 +3360,70 @@
             analyzeBtn.disabled = true;
             EcoAudio.playScan();
 
-            setTimeout(async () => {
+            let label = "";
+            let category = "";
+            let confidence = 0;
+            let success = false;
+
+            // 1. Check if Azure Custom Vision is enabled and configured
+            if (azureConfig.enabled && azureConfig.endpoint && azureConfig.key && azureConfig.projectId && azureConfig.iterationName) {
+                try {
+                    const url = `${azureConfig.endpoint.replace(/\/$/, '')}/customvision/v3.0/Prediction/${azureConfig.projectId}/classify/iterations/${azureConfig.iterationName}/image`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Prediction-Key': azureConfig.key,
+                            'Content-Type': 'application/octet-stream'
+                        },
+                        body: currentUploadedFile
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.predictions && data.predictions.length > 0) {
+                            // Find prediction with highest probability
+                            const topPrediction = data.predictions.reduce((prev, current) => (prev.probability > current.probability) ? prev : current);
+                            label = topPrediction.tagName;
+                            confidence = topPrediction.probability;
+                            category = classifyLabel(label);
+                            success = true;
+                        }
+                    } else {
+                        const err = await response.text();
+                        console.warn("Azure Custom Vision API error:", err);
+                    }
+                } catch (e) {
+                    console.error("Azure Custom Vision API connection failed:", e);
+                }
+            }
+
+            // 2. Fallback to TensorFlow.js model if Azure not enabled or failed
+            if (!success && aiModel && imagePreview.complete) {
+                try {
+                    const predictions = await aiModel.classify(imagePreview);
+                    if (predictions.length > 0) {
+                        label = predictions[0].className;
+                        confidence = predictions[0].probability;
+                        category = classifyLabel(label);
+                        success = true;
+                    }
+                } catch (e) {
+                    console.error("TF.js inference error:", e);
+                }
+            }
+
+            // 3. Fallback to mock heuristics if all else failed
+            if (!success) {
+                const mock = getMockClassification(currentUploadedFile.name);
+                label = mock.label;
+                category = mock.category;
+                confidence = mock.confidence;
+            }
+
+            // Add a small delay for scanning line animation effect
+            setTimeout(() => {
                 previewContainer.classList.remove('is-scanning');
                 analyzeBtn.disabled = false;
-                
-                let label = "";
-                let category = "";
-                let confidence = 0;
-
-                // Try running browser TensorFlow classification
-                if (aiModel && imagePreview.complete) {
-                    try {
-                        const predictions = await aiModel.classify(imagePreview);
-                        if (predictions.length > 0) {
-                            label = predictions[0].className;
-                            confidence = predictions[0].probability;
-                            category = classifyLabel(label);
-                        }
-                    } catch (e) {
-                        console.error("AI inference error, falling back to mocks", e);
-                    }
-                }
-
-                // Fallback heuristics if AI failed/offline
-                if (!label) {
-                    const mock = getMockClassification(currentUploadedFile.name);
-                    label = mock.label;
-                    category = mock.category;
-                    confidence = mock.confidence;
-                }
 
                 // Capitalize label
                 label = label.charAt(0).toUpperCase() + label.slice(1);
@@ -3175,8 +3450,7 @@
                 
                 // Actuate IoT simulator
                 triggerPhysicalTwinLid(category);
-
-            }, 1500);
+            }, 800);
         });
     }
 
@@ -3295,6 +3569,27 @@
         ctx.clearRect(0, 0, cameraOverlayCanvas.width, cameraOverlayCanvas.height);
     }
 
+    // Helper to capture current frame as JPEG Blob
+    function captureVideoFrameBlob() {
+        return new Promise((resolve) => {
+            try {
+                const c = document.createElement('canvas');
+                c.width = webcamVideo.videoWidth || 640;
+                c.height = webcamVideo.videoHeight || 360;
+                const cx = c.getContext('2d');
+                // Mirror capture to match webcam video
+                cx.translate(c.width, 0);
+                cx.scale(-1, 1);
+                cx.drawImage(webcamVideo, 0, 0, c.width, c.height);
+                c.toBlob((blob) => {
+                    resolve(blob);
+                }, 'image/jpeg', 0.85);
+            } catch (e) {
+                resolve(null);
+            }
+        });
+    }
+
     // Frame Analyzer
     async function processWebcamFrame() {
         if (!activeWebcamStream || isModelLoading) return;
@@ -3309,25 +3604,58 @@
         let detectedLabel = "";
         let detectedCategory = "";
         let probability = 0;
+        let success = false;
 
-        // Run active model prediction on video frame
-        if (aiModel) {
+        // 1. Try Azure Custom Vision API if enabled
+        if (azureConfig.enabled && azureConfig.endpoint && azureConfig.key && azureConfig.projectId && azureConfig.iterationName) {
+            try {
+                const frameBlob = await captureVideoFrameBlob();
+                if (frameBlob) {
+                    const url = `${azureConfig.endpoint.replace(/\/$/, '')}/customvision/v3.0/Prediction/${azureConfig.projectId}/classify/iterations/${azureConfig.iterationName}/image`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Prediction-Key': azureConfig.key,
+                            'Content-Type': 'application/octet-stream'
+                        },
+                        body: frameBlob
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.predictions && data.predictions.length > 0) {
+                            const topPrediction = data.predictions.reduce((prev, current) => (prev.probability > current.probability) ? prev : current);
+                            detectedLabel = topPrediction.tagName;
+                            probability = topPrediction.probability;
+                            detectedCategory = classifyLabel(detectedLabel);
+                            success = true;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Realtime Azure Custom Vision API frame classification failed:", e);
+            }
+        }
+
+        // 2. Try TF.js Local Model fallback
+        if (!success && aiModel) {
             try {
                 const predictions = await aiModel.classify(webcamVideo);
                 if (predictions.length > 0) {
                     detectedLabel = predictions[0].className;
                     probability = predictions[0].probability;
                     detectedCategory = classifyLabel(detectedLabel);
+                    success = true;
                 }
             } catch (e) {
-                console.error("Realtime frame classification failed:", e);
+                console.error("Realtime TF.js local frame classification failed:", e);
             }
         }
 
-        // Heuristic Simulation if offline
-        if (!detectedLabel) {
+        // 3. Try Mock Simulation fallback if offline/no detection
+        if (!success) {
             // Randomly simulate scan occurrences occasionally
-            if (Math.random() > 0.4) {
+            if (Math.random() > 0.6) {
                 const simulatedWaste = [
                     { label: "Banana skin", category: "organic", probability: 0.95 },
                     { label: "Disposable can", category: "recyclable", probability: 0.88 },
@@ -3350,7 +3678,7 @@
             const bx = (w - boxSize) / 2;
             const by = (h - boxSize) / 2;
 
-            ctx.strokeStyle = detectedCategory === 'recyclable' || detectedCategory === 'organic' ? '#2ed573' : '#ff4757';
+            ctx.strokeStyle = detectedCategory === 'recyclable' || detectedCategory === 'organic' || detectedCategory === 'glass' ? '#2ed573' : '#ff4757';
             ctx.lineWidth = 3;
             ctx.shadowBlur = 10;
             ctx.shadowColor = ctx.strokeStyle;
@@ -4125,6 +4453,9 @@
 
         // 4. Populate default settings
         updateHardwareLevels();
+
+        // 5. Load Azure Custom Vision settings
+        loadAzureConfig();
 
         document.getElementById('gameHighScore').innerText = gameHighScore;
 
